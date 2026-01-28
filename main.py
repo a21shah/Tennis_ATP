@@ -1,7 +1,9 @@
 import polars as pl
 
-df = pl.read_csv('atp_matches_2024.csv', infer_schema_length=None)
+file_2024 = 'atp_matches_2024.csv'
 
-print(df.shape)
+df = pl.read_csv(file_2024, infer_schema_length=None)
+
+print(df.shape) # (3076, 49)
 
 
