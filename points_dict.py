@@ -43,9 +43,9 @@ points_500_32 = {
     'R32': 0
 }
 
-# There are two different types of ATP Masters. 
-# 7 ATP Masters 1000 events have a 96 player draw. The top 32 players recieve a bye into the 2nd round.
-# Monte-Carlo and Paris have a 56 player draw and thus have one less round. The top 8 players recieve a bye into the 2nd round.
+# There are two different draw sizes in ATP Masters. 
+# 96 player draw: The top 32 players recieve a bye into the 2nd round (R64).
+# 56 player draw: The top 8 players recieve a bye into the 2nd round (R32).
 points_1000_96 = {
     'W': 1000, 
     'F': 650,
