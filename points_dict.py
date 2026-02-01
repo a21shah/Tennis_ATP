@@ -12,7 +12,8 @@ points_250_48 = {
     'R64': 0
 }
 
-# Points awarded for a 250 tournament with a 32 (or 28) player draw
+# Points awarded for a 250 tournament with a 32 player draw
+# Also applies to a 250 tournament with a 28 player draw (Top 4 seeds receive a bye to R16)
 points_250_32 = {
     'W': 250,
     'F': 165,
@@ -78,9 +79,10 @@ points_GS = {
     'R128': 10,
 }
 
-# ATP Finals: A player recieves points for every Round Robin match won (RR)
+# ATP Finals: A player recieves points for every Round Robin match won (RR), SF won and F won
+# Player that wins all 3 RR matches and the SF and F would get the max points available (1500)
 points_ATP_Finals = {
-    'W': 900,
-    'F': 400,
+    'F': 500,
+    'SF': 400,
     'RR': 200, 
 }
