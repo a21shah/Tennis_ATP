@@ -44,9 +44,7 @@ points_500_32 = {
     'R32': 0
 }
 
-# There are two different draw sizes in ATP Masters. 
-# 96 player draw: The top 32 players recieve a bye into the 2nd round (R64).
-# 56 player draw: The top 8 players recieve a bye into the 2nd round (R32).
+# Points awarded for a Masters 1000 tournaments with 96 player draw (Top 32 players recieve a bye to R64)
 points_1000_96 = {
     'W': 1000, 
     'F': 650,
@@ -58,6 +56,7 @@ points_1000_96 = {
     'R128': 10,
 }
 
+# Points awarded for a Masters 1000 tournaments with 96 player draw (Top 8 players recieve a bye to R32)
 points_1000_56 = {
     'W': 1000, 
     'F': 650,
@@ -79,8 +78,8 @@ points_GS = {
     'R128': 10,
 }
 
-# ATP Finals: A player recieves points for every Round Robin match won (RR), SF won and F won
-# Player that wins all 3 RR matches and the SF and F would get the max points available (1500)
+# ATP Finals: A player recieves points for every Round Robin match won (RR), and for winning the SF and F
+# Player that wins all 3 RR matches, SF and F would get the max points available (1500)
 points_ATP_Finals = {
     'F': 500,
     'SF': 400,
