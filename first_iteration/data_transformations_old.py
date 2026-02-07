@@ -7,7 +7,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 # read file
 file_2024 = 'atp_matches_2024.csv'
 df = pl.read_csv(file_2024, infer_schema_length=None)
-print(df.shape) # (3076, 49)
+# print(df.shape) # (3076, 49)
 
 keep_cols = ['tourney_name', 'surface', 'draw_size', 'tourney_level', 'tourney_date', 'winner_id', 'winner_name', 'winner_seed', 'loser_id', 'loser_name', 'loser_seed', 'round']
 winner_cols_rename = {'winner_id':'player_id', 'winner_name':'player_name', 'winner_seed':'player_seed'} 
@@ -19,8 +19,7 @@ exclude_tournaments = ['United Cup', 'Laver Cup', 'Next Gen Finals']
 df1 = df[keep_cols].clone()
 df1 = df1.with_columns(pl.col('draw_size').replace(draw_size).alias('draw_size'))
 df1 = df1.filter((pl.col('tourney_level').is_in(['A', 'M', 'G', 'F'])) & (~pl.col('tourney_name').is_in(exclude_tournaments)))
-
-print(df1.shape)
+# print(df1.shape) # 2703, 12
 
 def get_points(df, tourney_level, draw_size, points_dict):
     
