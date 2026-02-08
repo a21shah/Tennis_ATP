@@ -68,6 +68,8 @@ def assign_points_second_round_seeded_losers(df, points_df, tourney_level, draw_
 
 def pivot_df(df):
     
+    df = df.with_columns(pl.concat_str([pl.col('points'), pl.col('round')], separator=' - ').alias('points_round'))
+    
     df = df.pivot(
         values = 'points',
         index = ['player_id', 'player_name'],
