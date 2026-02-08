@@ -12,10 +12,12 @@ print(df.shape)
 keep_cols = ['tourney_name', 'surface', 'draw_size', 'tourney_level', 'tourney_date', 'winner_id', 'winner_name', 'winner_seed', 'loser_id', 'loser_name', 'loser_seed', 'round']
 
 df1 = df[keep_cols].clone()
-df1 = df1.filter((pl.col('tourney_level').is_in(['250', '500', 'M', 'G', 'F'])))
+tournament_levels = ['250', '500', 'M', 'G', 'F']
+df1 = df1.filter((pl.col('tourney_level').is_in(tournament_levels)))
 print(df1.shape)
 
 ### Grand Slams ###
+
 df_gs = get_points(df1, 'G', 128, points_dict.points_GS)
 df_gs_points = pivot_df(df_gs)
 df_gs_points
@@ -65,14 +67,36 @@ df_250_28 = assign_points_second_round_seeded_losers(df1, df_250_28, '250', 28, 
 df_250_28_points = pivot_df(df_250_28)
 
 ### ATP Finals ###
+
 df_atp_finals = df1.filter((pl.col('tourney_name') == 'ATP Finals'))
+
+# Used to map points for the players that lost in the SF and F
+semifinalists = df_atp_finals[['loser_id', 'round']].filter(pl.col('round').is_in(['SF', 'F']))
+atp_final4_dict = dict(semifinalists.iter_rows())
+
+# If player wins 0 matches, they won't have any points mapped and thus would be excluded from the group_by
+df_atp_finals_loser = df_atp_finals[['tourney_name','tourney_level','loser_id','loser_name','loser_seed']].rename(non_winner_cols_rename)
+df_atp_finals_loser = df_atp_finals_loser.with_columns(pl.lit(0).cast(pl.Int64).alias('points'))
+
 df_atp_finals = df_atp_finals.with_columns(pl.col('round').replace_strict(points_dict.points_ATP_Finals, default=None).alias('points'))
-df_atp_finals = df_atp_finals[['tourney_name','tourney_level','winner_id','winner_name','winner_seed','points']].rename(winner_cols_rename)
-df_atp_finals = df_atp_finals.group_by(['tourney_name','tourney_level','player_id', 'player_name']).agg(pl.col('points').sum().alias('points'))
+df_atp_finals_winner = df_atp_finals[['tourney_name','tourney_level','winner_id','winner_name','winner_seed','points']].rename(winner_cols_rename)
+df_atp_finals = pl.concat([df_atp_finals_loser, df_atp_finals_winner])
+
+df_atp_finals = df_atp_finals.group_by(['tourney_name','tourney_level','player_id','player_name']).agg(pl.col('points').sum().alias('points'))
+# By default map every player to round = RR except for those that lost in SF and F
+df_atp_finals = df_atp_finals.with_columns(pl.col('player_id').replace_strict(atp_final4_dict, default='RR').alias('round'))
+# Player that won ATP Finals should have round = W and that player would have at least 1100 points
+df_atp_finals = df_atp_finals.with_columns(
+    pl.when(pl.col('points') >= 1100)
+    .then(pl.lit('W'))
+    .otherwise(pl.col('round'))
+    .alias('round')
+)
+
 df_atp_finals_points = pivot_df(df_atp_finals)
-df_atp_finals_points
 
 ### List of all Players who participated in that year's ATP Tour ###
+
 winner_cols_rename = {'winner_id':'player_id', 'winner_name':'player_name'} 
 loser_cols_rename = {'loser_id':'player_id', 'loser_name':'player_name'}
 
