@@ -9,7 +9,7 @@ file = f'matches_data/atp_matches_{year}.csv'
 df = pl.read_csv(file, infer_schema_length=None)
 print(df.shape)
 
-keep_cols = ['tourney_name', 'surface', 'draw_size', 'tourney_level', 'tourney_date', 'winner_id', 'winner_name', 'winner_seed', 'loser_id', 'loser_name', 'loser_seed', 'round']
+keep_cols = ['tourney_name', 'surface', 'draw_size', 'match_num', 'tourney_level', 'tourney_date', 'winner_id', 'winner_name', 'winner_seed', 'loser_id', 'loser_name', 'loser_seed', 'round']
 
 df1 = df[keep_cols].clone()
 tournament_levels = ['250', '500', 'M', 'G', 'F']
@@ -105,17 +105,40 @@ losers = df1[['loser_id', 'loser_name', ]].unique().rename(loser_cols_rename)
 players = pl.concat([winners, losers])
 players = players.unique()
 
+join_cols = ['player_id', 'player_name']
+
 final_atp_points_df = (
-    players.join(df_gs_points, on=['player_id', 'player_name'], how='left')
-    .join(df_masters_96_points, on=['player_id', 'player_name'], how='left')
-    .join(df_masters_56_points, on=['player_id', 'player_name'], how='left')
-    .join(df_500_32_points, on=['player_id', 'player_name'], how='left')
-    .join(df_500_48_points, on=['player_id', 'player_name'], how='left')
-    .join(df_250_32_points, on=['player_id', 'player_name'], how='left')
-    .join(df_250_48_points, on=['player_id', 'player_name'], how='left')
-    .join(df_250_28_points, on=['player_id', 'player_name'], how='left')
-    .join(df_atp_finals_points, on=['player_id', 'player_name'], how='left')
+    players.join(df_gs_points, on=join_cols, how='left')
+    .join(df_masters_96_points, on=join_cols, how='left')
+    .join(df_masters_56_points, on=join_cols, how='left')
+    .join(df_500_32_points, on=join_cols, how='left')
+    .join(df_500_48_points, on=join_cols, how='left')
+    .join(df_250_32_points, on=join_cols, how='left')
+    .join(df_250_48_points, on=join_cols, how='left')
+    .join(df_250_28_points, on=join_cols, how='left')
+    .join(df_atp_finals_points, on=join_cols, how='left')
 )
+
+# Sort final Dataframe by date of occurence of each tournament
+
+tournaments = df1.filter(pl.col('match_num')==1)['tourney_name', 'tourney_date'].unique().sort(by=['tourney_date', 'tourney_name'])
+tournaments = tournaments['tourney_name'].to_list()
+cols_order = join_cols + tournaments
+final_atp_points_df = final_atp_points_df[cols_order]
+
+# Add total points each player earned throughtout the entire season
+final_atp_points_sorted_df = final_atp_points_df.with_columns(
+    pl.sum_horizontal(
+        pl.all()
+        .exclude(["player_id", "player_name"])
+        .cast(pl.Utf8, strict=False)
+        .str.extract(r"(\d+)", 1)
+        .cast(pl.Int64)
+    )
+    .alias('total_points_earned')
+).sort(by='total_points_earned', descending=True)
+
+final_atp_points_sorted_df = final_atp_points_sorted_df.filter(pl.col('total_points_earned')>0)
 
 ### Write data to file
 
@@ -129,5 +152,5 @@ if not os.path.exists(output_dir):
     print(f'Created directory: {output_dir}')
 
 # Write DataFrame to the specific folder
-final_atp_points_df.write_csv(full_path)
+final_atp_points_sorted_df.write_csv(full_path)
 print(f'Created file {output_filename}')

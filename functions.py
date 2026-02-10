@@ -71,9 +71,9 @@ def pivot_df(df):
     df = df.with_columns(pl.concat_str([pl.col('points'), pl.col('round')], separator=' - ').alias('points_round'))
     
     df = df.pivot(
-        values = 'points',
+        values = 'points_round',
         index = ['player_id', 'player_name'],
-        on = ['tourney_name', 'tourney_level'],
+        on = ['tourney_name'],#, 'tourney_level'],
         aggregate_function='first'
     )
 
