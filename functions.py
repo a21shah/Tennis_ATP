@@ -1,3 +1,5 @@
+import json
+import os
 import polars as pl
 import points_dict
 
@@ -78,3 +80,22 @@ def pivot_df(df):
     )
 
     return df
+
+def ensure_dir(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+        print(f'Created directory: {path}')
+
+def write_csv(df, output_dir, filename):
+    ensure_dir(output_dir)
+    filepath = os.path.join(output_dir, filename)
+    df.write_csv(filepath)
+    print(f'Created file {filename}')
+
+
+def write_json(data, output_dir, filename, indent= 4):
+    ensure_dir(output_dir)
+    filepath = os.path.join(output_dir, filename)
+    with open(filepath, 'w') as f:
+        json.dump(data, f, indent=indent)
+    print(f'Created file {filename}')

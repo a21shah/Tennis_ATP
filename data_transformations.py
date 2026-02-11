@@ -1,5 +1,4 @@
 from functions import *
-import os
 import sys
 sys.stdout.reconfigure(encoding='utf-8')
 
@@ -83,9 +82,11 @@ df_atp_finals_winner = df_atp_finals[['tourney_name','tourney_level','winner_id'
 df_atp_finals = pl.concat([df_atp_finals_loser, df_atp_finals_winner])
 
 df_atp_finals = df_atp_finals.group_by(['tourney_name','tourney_level','player_id','player_name']).agg(pl.col('points').sum().alias('points'))
+
 # By default map every player to round = RR except for those that lost in SF and F
 df_atp_finals = df_atp_finals.with_columns(pl.col('player_id').replace_strict(atp_final4_dict, default='RR').alias('round'))
-# Player that won ATP Finals should have round = W and that player would have at least 1100 points
+
+# Player that won ATP Finals map round = W and that player would have at least 1100 points
 df_atp_finals = df_atp_finals.with_columns(
     pl.when(pl.col('points') >= 1100)
     .then(pl.lit('W'))
@@ -121,7 +122,7 @@ final_atp_points_df = (
 
 # Sort final Dataframe by date of occurence of each tournament
 
-tournaments = df1.filter(pl.col('match_num')==1)['tourney_name', 'tourney_date'].unique().sort(by=['tourney_date', 'tourney_name'])
+tournaments = df1[['tourney_name', 'tourney_date']].unique().sort(by=['tourney_date', 'tourney_name'])
 tournaments = tournaments['tourney_name'].to_list()
 cols_order = join_cols + tournaments
 final_atp_points_df = final_atp_points_df[cols_order]
@@ -130,27 +131,37 @@ final_atp_points_df = final_atp_points_df[cols_order]
 final_atp_points_sorted_df = final_atp_points_df.with_columns(
     pl.sum_horizontal(
         pl.all()
-        .exclude(["player_id", "player_name"])
+        .exclude(['player_id', 'player_name'])
         .cast(pl.Utf8, strict=False)
-        .str.extract(r"(\d+)", 1)
+        .str.extract(r'(\d+)', 1)
         .cast(pl.Int64)
     )
     .alias('total_points_earned')
 ).sort(by='total_points_earned', descending=True)
 
-final_atp_points_sorted_df = final_atp_points_sorted_df.filter(pl.col('total_points_earned')>0)
+# Remove players that have earned 0 total points
+final_atp_points_sorted_df = final_atp_points_sorted_df.filter(pl.col('total_points_earned') > 0)
 
-### Write data to file
+# Map every tournament to its level 
+tournament_dict = {'250':'ATP 250', '500':'ATP 500', 'M':'Masters 1000', 'G':'Grand Slam', 'F':'ATP Finals'}
+tourney_levels = (
+        df1
+        .select(['tourney_name', 'tourney_level'])
+        .unique(maintain_order=True)
+        .group_by('tourney_level', maintain_order=True)
+        .agg(pl.col('tourney_name'))
+    )
+tourney_levels = tourney_levels.with_columns(pl.col('tourney_level').replace_strict(tournament_dict, default=None))
 
-output_dir = 'atp_points'
-output_filename = f'points_{year}.csv'
-full_path = os.path.join(output_dir, output_filename)
+tourney_levels_dict = dict(zip(tourney_levels['tourney_level'].to_list(), tourney_levels['tourney_name'].to_list()))
 
-# Ensure directory exists (create it if not)
-if not os.path.exists(output_dir):
-    os.makedirs(output_dir)
-    print(f'Created directory: {output_dir}')
+### Write data to files
 
-# Write DataFrame to the specific folder
-final_atp_points_sorted_df.write_csv(full_path)
-print(f'Created file {output_filename}')
+# Write dataframe to csv
+output_dir_points = 'atp_points'
+write_csv(final_atp_points_sorted_df, output_dir=output_dir_points, filename=f'points_{year}.csv',)
+
+# Write tournament dictionary to json
+output_dir_json = 'atp_tournaments'
+write_json(tourney_levels_dict, output_dir=output_dir_json, filename=f'tournaments_{year}.json',)
+
