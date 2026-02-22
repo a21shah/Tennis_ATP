@@ -20,7 +20,7 @@ st.set_page_config(layout='wide')
 st.title(f'ATP Points to Defend {year}')
    
 df = load_atp_points(year)
-df.drop_in_place('player_id')
+df = df.drop(['player_id', 'total_points_earned'])
 tournament_map = tournament_level_map(df)
 
 players = st.sidebar.multiselect(
@@ -42,21 +42,23 @@ if tournament_levels:
     for selected_tournament in tournament_levels:
         filter_tournaments.extend(tournament_map[selected_tournament])
 
+sidebar_checkbox = None
 
 if filter_tournaments:
     options = st.sidebar.multiselect('Tournaments', options=filter_tournaments)
     if options:
         cols = player_col + options
+        sidebar_checkbox = st.sidebar.checkbox('Drop Null Rows')  
     else:
         cols = player_col + filter_tournaments
     df = df.select(cols)
-
+    if sidebar_checkbox:
+        df = df.drop_nulls()  
+    
 if players:
     df = df.filter(pl.col("player_name").is_in(players))
     df = df[[s.name for s in df if not (s.null_count() == df.height)]]
 
 st.dataframe(df, width='stretch')
-
-
 
 
