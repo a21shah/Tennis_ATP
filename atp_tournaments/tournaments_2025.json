@@ -1,0 +1,72 @@
+{
+    "ATP 250": [
+        "Brisbane",
+        "Hong Kong",
+        "Adelaide",
+        "Auckland",
+        "Montpellier",
+        "Marseille",
+        "Delray Beach",
+        "Buenos Aires",
+        "Santiago",
+        "Houston",
+        "Marrakech",
+        "Bucharest",
+        "Geneva",
+        "Stuttgart",
+        "'s-Hertogenbosch",
+        "Mallorca",
+        "Eastbourne",
+        "Los Cabos",
+        "Gstaad",
+        "Bastad",
+        "Umag",
+        "Kitzbuhel",
+        "Winston-Salem",
+        "Chengdu",
+        "Hangzhou",
+        "Stockholm",
+        "Brussels",
+        "Almaty",
+        "Metz",
+        "Athens"
+    ],
+    "Grand Slam": [
+        "Australian Open",
+        "Roland Garros",
+        "Wimbledon",
+        "US Open"
+    ],
+    "ATP 500": [
+        "Dallas",
+        "Rotterdam",
+        "Doha",
+        "Rio de Janeiro",
+        "Dubai",
+        "Acapulco",
+        "Barcelona",
+        "Munich",
+        "Hamburg",
+        "Queen's Club",
+        "Halle",
+        "Washington",
+        "Tokyo",
+        "Beijing",
+        "Basel",
+        "Vienna"
+    ],
+    "Masters 1000": [
+        "Indian Wells Masters",
+        "Miami Masters",
+        "Monte Carlo Masters",
+        "Madrid Masters",
+        "Rome Masters",
+        "Canada Masters",
+        "Cincinnati Masters",
+        "Shanghai Masters",
+        "Paris Masters"
+    ],
+    "ATP Finals": [
+        "ATP Finals"
+    ]
+}
