@@ -2,20 +2,17 @@
 
 Calculate how many points each player is defending per tournament by analyzing their results on the ATP Tour (Singles) in 2025.
 
+Link to app: https://atp-points-defend.streamlit.app/
 
-### First Iteration: Dataset from Jeff Sackmann
-Data: [ATP Matches](https://github.com/JeffSackmann/tennis_atp)
+### Data: [TML-Database](https://github.com/Tennismylife/TML-Database)
+**Note: Dataset only contain the main round matches played on the ATP Tour and does not contain matches played in Qualifiers.**
+***
 
-The first iteration of this project was done using Jeff Sackmann's data. However, since the 2025 match file is not available a different data source was identified.
+### Alternative Data Sources
+1: [Jeff Sackmann - ATP Matches](https://github.com/JeffSackmann/tennis_atp)
 
-### Second Iteration: TML-Database
-Data: [TML-Database](https://github.com/Tennismylife/TML-Database)
+The TML-Database is modelled after Jeff Sackmann's data. Originally this dataset was used, however this data is not updated as frequently.
 
-This repo is updated more frequently and contains data for 2025. This data is also originally inspired by Jeff Sackmann's data, therefore minimal changes were required to the existing logic.
+2: [Tennis-Data](http://www.tennis-data.co.uk/data.php)
 
-### Alternative: Data from Tennis-Data
-Data: [Tennis-Data](http://www.tennis-data.co.uk/data.php)
-
-An alternative source that also updates data frequently.
-
-Note: All datasets only contain the main round matches played on the ATP Tour and does not contain matches played in Qualifiers.
+This datasource is updated frequently and contains both ATP and WTA data.
