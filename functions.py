@@ -8,12 +8,14 @@ non_winner_cols_rename = {'loser_id':'player_id', 'loser_name':'player_name', 'l
 
 
 def get_points(df, tourney_level, draw_size, points_dict):
+    # Map the points players received depending on their tournament result for each tournament level
     
     df_filter = df.filter((pl.col('tourney_level') == tourney_level) & (pl.col('draw_size') == draw_size))
-
+    # Create df that maps points using losers as each player will be listed in that column exactly once
     df_non_winner = df_filter.with_columns(pl.col('round').replace_strict(points_dict, default=None).alias('points'))
-    df_non_winner = df_non_winner[['tourney_name','tourney_level','loser_id','loser_name','loser_seed','round','points']].rename(non_winner_cols_rename)
-
+    df_non_winner = df_non_winner.with_columns(pl.col('points').cast(pl.Int32))
+    
+    # Create df that maps points for the winner by filtering for the finals and convert the column 'round' to W
     df_winner = (
         df_filter
         .filter(pl.col('round') == 'F')
@@ -23,16 +25,16 @@ def get_points(df, tourney_level, draw_size, points_dict):
         ])
     )
 
+    # Rename columns of both dfs created above and concat them into one df
     df_winner = df_winner[['tourney_name','tourney_level','winner_id','winner_name','winner_seed','round','points']].rename(winner_cols_rename)
-    df_winner
-
-    df_non_winner = df_non_winner.with_columns(pl.col('points').cast(pl.Int32))
+    df_non_winner = df_non_winner[['tourney_name','tourney_level','loser_id','loser_name','loser_seed','round','points']].rename(non_winner_cols_rename)
     df_points = pl.concat([df_non_winner, df_winner])
-    df_points
 
     return df_points
 
-def assign_points_second_round_seeded_losers(df, points_df, tourney_level, draw_size, second_round, points_dict):
+def assign_points_bye_into_second_round(df, points_df, tourney_level, draw_size, second_round, points_dict):
+    # Some tournaments players receive a bye into the second round and if they lose
+    # in that round they get the points equivalent to that of losing in the first round
 
     all_matches = df.filter((pl.col('tourney_level') == tourney_level) & (pl.col('draw_size') == draw_size))
 
@@ -58,17 +60,18 @@ def assign_points_second_round_seeded_losers(df, points_df, tourney_level, draw_
         .filter(pl.col('match_count') == 1)
     )
 
+    # Add literal values for columns 'points' and 'round'
     second_round_bye_losers = second_round_bye_losers.with_columns((pl.lit(points_dict).alias('points')), (pl.lit(second_round).alias('round')))
 
     points_df = (
         points_df.join(second_round_bye_losers, on=['tourney_name', 'player_id', 'player_name', 'round'], how='left')
         .with_columns(pl.coalesce(['points_right', 'points']).alias('points'))
-        #.drop('points_right')
     )
 
     return points_df
 
 def pivot_df(df):
+    # Pivot df to have players as rows and tournaments as columns
     
     df = df.with_columns(pl.concat_str([pl.col('points'), pl.col('round')], separator=' - ').alias('points_round'))
     
@@ -91,7 +94,6 @@ def write_csv(df, output_dir, filename):
     filepath = os.path.join(output_dir, filename)
     df.write_csv(filepath)
     print(f'Created file {filename}')
-
 
 def write_json(data, output_dir, filename, indent= 4):
     ensure_dir(output_dir)

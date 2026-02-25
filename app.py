@@ -16,6 +16,9 @@ def tournament_level_map():
 
 @st.cache_data
 def max_points(tournaments_json):
+    # A dictionary that maps every tournament to the max points that can be recieved
+    # This is used to calculcate the max points available across all the tournaments
+    # once the filters have been applied.
     points_max = {
         'ATP 250': 250,
         'ATP 500': 500,
@@ -44,6 +47,7 @@ tournament_map = tournament_level_map()
 with st.sidebar:
     st.header('Filters')
 
+    # Filter for players
     players = st.multiselect(
         'Players',
         options=df['player_name'].unique(maintain_order=True),
@@ -58,7 +62,7 @@ with st.sidebar:
         key = 'levels_filter'
     )
 
-# Add to list all the tournaments available for all selected levels
+# Add to list all the tournaments available for all levels selected by user in the tournament_levels filter
 levels = []
 for level in tournament_levels:
     levels.extend(tournament_map[level])
@@ -79,7 +83,7 @@ with st.sidebar:
         key = 'tournament_filter'
     )
 
-    # Show checkbox only when tournaments selected
+    # Show checkbox only when either tournaments filter is being used
     drop_null_rows = False
     if selected_tournaments or tournament_levels:
         drop_null_rows = st.checkbox('Hide players with no results in selected tournaments', key = 'drop_nulls_filter')
@@ -105,11 +109,12 @@ if players:
 if drop_null_rows:
     df = df.filter(~pl.all_horizontal(pl.all().exclude(player_name).is_null()))
 
-# Remove columns that are entirely null
+# Remove columns that are entirely null (comes into effect only when the players filter is active as only those tournaments should be displayed)
 df = df[[s.name for s in df if not (s.null_count() == df.height)]]
 
 # ---------------- Dashboard Info ---------------- #
 
+# Metrics to display
 metric1, metric2, metric3 = st.columns(3)
 
 metric1.metric('Players Shown', df.select(pl.col('player_name').n_unique()))
@@ -121,7 +126,6 @@ if tournament_levels or selected_tournaments or players:
 
     tournament_max_points_dict = max_points(tournament_map)
     for final_cols in df.columns[1:]:
-        print(tournament_max_points_dict[final_cols])
         max_points_available += tournament_max_points_dict[final_cols]
 
     metric3.metric('Maximum Points Available across selected Tournaments', max_points_available)

@@ -6,36 +6,37 @@ sys.stdout.reconfigure(encoding='utf-8')
 year = 2025
 file = f'matches_data/atp_matches_{year}.csv'
 df = pl.read_csv(file, infer_schema_length=None)
-print(df.shape)
+print('Shape of file is:', df.shape)
 
 keep_cols = ['tourney_name', 'surface', 'draw_size', 'match_num', 'tourney_level', 'tourney_date', 'winner_id', 'winner_name', 'winner_seed', 'loser_id', 'loser_name', 'loser_seed', 'round']
 
 df1 = df[keep_cols].clone()
 tournament_levels = ['250', '500', 'M', 'G', 'F']
 df1 = df1.filter((pl.col('tourney_level').is_in(tournament_levels)))
-print(df1.shape)
+print('Rows containing only ATP Events that award points:', df1.height)
 
-### Grand Slams ###
+# ---------------- Grand Slams ---------------- #
 
 df_gs = get_points(df1, 'G', 128, points_dict.points_GS)
 df_gs_points = pivot_df(df_gs)
 df_gs_points
 
-### ATP Masters ###
+# ---------------- ATP Masters ---------------- #
+
 
 # 96 Player Draw
 df_masters_96 = get_points(df1, 'M', 96, points_dict.points_1000_96)
 # Players that received a bye in R64 in a 48 Player Draw and lost get 10 points
-df_masters_96 = assign_points_second_round_seeded_losers(df1, df_masters_96, 'M', 96, 'R64', points_dict.points_1000_96['R128'])
+df_masters_96 = assign_points_bye_into_second_round(df1, df_masters_96, 'M', 96, 'R64', points_dict.points_1000_96['R128'])
 df_masters_96_points = pivot_df(df_masters_96)
 
 # 56 Player Draw
 df_masters_56 = get_points(df1, 'M', 56, points_dict.points_1000_56)
 # Players that received a bye in R32 in a 48 Player Draw and lost get 10 points
-df_masters_56 = assign_points_second_round_seeded_losers(df1, df_masters_56, 'M', 56, 'R32', points_dict.points_1000_56['R64'])
+df_masters_56 = assign_points_bye_into_second_round(df1, df_masters_56, 'M', 56, 'R32', points_dict.points_1000_56['R64'])
 df_masters_56_points = pivot_df(df_masters_56)
 
-### ATP 500 ###
+# ---------------- ATP 500 ---------------- #
 
 # 32 Player Draw
 df_500_32 = get_points(df1, '500', 32, points_dict.points_500_32)
@@ -44,10 +45,10 @@ df_500_32_points = pivot_df(df_500_32)
 # 48 Player Draw
 df_500_48 = get_points(df1, '500', 48, points_dict.points_500_48)
 # Players that received a bye in R32 in a 48 Player Draw and lost get 0 points
-df_500_48 = assign_points_second_round_seeded_losers(df1, df_500_48, '500', 48, 'R32', points_dict.points_500_48['R64'])
+df_500_48 = assign_points_bye_into_second_round(df1, df_500_48, '500', 48, 'R32', points_dict.points_500_48['R64'])
 df_500_48_points = pivot_df(df_500_48)
 
-### ATP 250 ###
+# ---------------- ATP 250 ---------------- #
 
 # 32 Draw
 df_250_32 = get_points(df1, '250', 32, points_dict.points_250_32)
@@ -56,16 +57,16 @@ df_250_32_points = pivot_df(df_250_32)
 # 48 Draw
 df_250_48 = get_points(df1, '250', 48, points_dict.points_250_48)
 # Players that received a bye in R32 in a 48 Player Draw and lost get 0 points
-df_250_48 = assign_points_second_round_seeded_losers(df1, df_250_48, '250', 48, 'R32', points_dict.points_250_48['R64'])
+df_250_48 = assign_points_bye_into_second_round(df1, df_250_48, '250', 48, 'R32', points_dict.points_250_48['R64'])
 df_250_48_points = pivot_df(df_250_48)
 
 # 28 Draw
 df_250_28 = get_points(df1, '250', 28, points_dict.points_250_32)
 # Players that received a bye in R16 in a 28 Player Draw and lost get 0 points
-df_250_28 = assign_points_second_round_seeded_losers(df1, df_250_28, '250', 28, 'R16', points_dict.points_250_32['R32'])
+df_250_28 = assign_points_bye_into_second_round(df1, df_250_28, '250', 28, 'R16', points_dict.points_250_32['R32'])
 df_250_28_points = pivot_df(df_250_28)
 
-### ATP Finals ###
+# ---------------- ATP Finals ---------------- #
 
 df_atp_finals = df1.filter((pl.col('tourney_name') == 'ATP Finals'))
 
@@ -94,6 +95,8 @@ df_atp_finals = df_atp_finals.with_columns(
     .alias('round')
 )
 
+# ---------------- Final Transformations ---------------- #
+
 df_atp_finals_points = pivot_df(df_atp_finals)
 
 ### List of all Players who participated in that year's ATP Tour ###
@@ -121,7 +124,6 @@ final_atp_points_df = (
 )
 
 # Sort final Dataframe by date of occurence of each tournament
-
 tournaments = df1[['tourney_name', 'tourney_date']].unique().sort(by=['tourney_date', 'tourney_name'])
 tournaments = tournaments['tourney_name'].to_list()
 cols_order = join_cols + tournaments
@@ -155,7 +157,7 @@ tourney_levels = tourney_levels.with_columns(pl.col('tourney_level').replace_str
 
 tourney_levels_dict = dict(zip(tourney_levels['tourney_level'].to_list(), tourney_levels['tourney_name'].to_list()))
 
-### Write data to files
+# ---------------- Write data to files ------------- #
 
 # Write dataframe to csv
 output_dir_points = 'atp_points'
