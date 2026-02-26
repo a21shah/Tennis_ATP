@@ -16,9 +16,9 @@ def tournament_level_map():
 
 @st.cache_data
 def max_points(tournaments_json):
-    # A dictionary that maps every tournament to the max points that can be recieved
+    # A dictionary that maps every tournament type to the max points that can be received
     # This is used to calculcate the max points available across all the tournaments
-    # once the filters have been applied.
+    # once the filters have been applied
     points_max = {
         'ATP 250': 250,
         'ATP 500': 500,
@@ -55,7 +55,7 @@ with st.sidebar:
     )
 
     st.divider()
-
+    
     tournament_levels = st.multiselect(
         'Tournament Level',
         options=sorted(list(tournament_map.keys())),
