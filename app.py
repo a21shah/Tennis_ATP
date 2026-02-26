@@ -36,7 +36,11 @@ def max_points(tournaments_json):
 
     
 year = 2025
-st.set_page_config(layout='wide')
+st.set_page_config(
+    layout='wide',
+    page_title='ATP Points to Defend',
+    page_icon='tennis-ball.png')
+
 st.title(f'ATP Points to Defend {year}')
 st.caption('Filter players and tournaments to explore points being defended')
    
