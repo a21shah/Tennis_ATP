@@ -141,9 +141,6 @@ final_atp_points_sorted_df = final_atp_points_df.with_columns(
     .alias('total_points_earned')
 ).sort(by='total_points_earned', descending=True)
 
-# Remove players that have earned 0 total points
-final_atp_points_sorted_df = final_atp_points_sorted_df.filter(pl.col('total_points_earned') > 0)
-
 # Map every tournament to its level 
 tournament_dict = {'250':'ATP 250', '500':'ATP 500', 'M':'Masters 1000', 'G':'Grand Slam', 'F':'ATP Finals'}
 tourney_levels = (
