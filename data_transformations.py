@@ -8,7 +8,7 @@ file = f'matches_data/atp_matches_{year}.csv'
 df = pl.read_csv(file, infer_schema_length=None)
 print('Shape of file is:', df.shape)
 
-keep_cols = ['tourney_name', 'surface', 'draw_size', 'match_num', 'tourney_level', 'tourney_date', 'winner_id', 'winner_name', 'winner_seed', 'loser_id', 'loser_name', 'loser_seed', 'round']
+keep_cols = ['tourney_name', 'surface', 'indoor', 'draw_size', 'match_num', 'tourney_level', 'tourney_date', 'winner_id', 'winner_name', 'winner_seed', 'loser_id', 'loser_name', 'loser_seed', 'round']
 
 df1 = df[keep_cols].clone()
 tournament_levels = ['250', '500', 'M', 'G', 'F']
@@ -154,6 +154,29 @@ tourney_levels = tourney_levels.with_columns(pl.col('tourney_level').replace_str
 
 tourney_levels_dict = dict(zip(tourney_levels['tourney_level'].to_list(), tourney_levels['tourney_name'].to_list()))
 
+# Map every tournament to its playing surface
+tourney_surfaces = (
+    df1
+    .select(['tourney_name', 'surface', 'indoor'])
+    .with_columns(
+        pl.when(pl.col('surface') == 'Hard')
+        .then(
+            pl.when(pl.col('indoor') == 'I')
+            .then(pl.lit('Indoor Hard'))
+            .when(pl.col('indoor') == 'O')
+            .then(pl.lit('Outdoor Hard'))
+        )
+        .otherwise(pl.col('surface'))
+        .alias('surface')
+    )
+    .select(['tourney_name', 'surface'])
+    .drop_nulls()
+    .unique(maintain_order=True)
+)
+if tourney_surfaces['tourney_name'].n_unique() != tourney_surfaces.height:
+    raise ValueError('A tournament has multiple surfaces in the matches data')
+tourney_surfaces_dict = dict(tourney_surfaces.iter_rows())
+
 # ---------------- Write data to files ------------- #
 
 # Write dataframe to csv
@@ -163,4 +186,4 @@ write_csv(final_atp_points_sorted_df, output_dir=output_dir_points, filename=f'p
 # Write tournament dictionary to json
 output_dir_json = 'atp_tournaments'
 write_json(tourney_levels_dict, output_dir=output_dir_json, filename=f'tournaments_{year}.json',)
-
+write_json(tourney_surfaces_dict, output_dir=output_dir_json, filename=f'tournament_surfaces_{year}.json',)

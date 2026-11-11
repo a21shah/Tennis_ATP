@@ -15,6 +15,11 @@ def tournament_level_map():
         return json.load(file)
 
 @st.cache_data
+def tournament_surface_map(year):
+    with open(f'atp_tournaments/tournament_surfaces_{year}.json', 'r') as file:
+        return json.load(file)
+
+@st.cache_data
 def max_points(tournaments_json):
     # A dictionary that maps every tournament type to the max points that can be received
     # This is used to calculcate the max points available across all the tournaments
@@ -47,6 +52,7 @@ st.caption('Filter players and tournaments to explore points being defended')
 df = load_atp_points(year)
 
 tournament_map = tournament_level_map()
+surface_map = tournament_surface_map(year)
 
 with st.sidebar:
     st.header('Filters')
@@ -56,6 +62,14 @@ with st.sidebar:
         'Players',
         options=df['player_name'].unique(maintain_order=True),
         key = 'players_filter'
+    )
+
+    st.divider()
+
+    selected_surfaces = st.multiselect(
+        'Surface',
+        options=sorted(set(surface_map.values())),
+        key='surfaces_filter'
     )
 
     st.divider()
@@ -73,10 +87,11 @@ for level in tournament_levels:
 
 all_tournaments = df.select(pl.exclude('player_name')).columns
 
-if levels:
-    available_tournaments = levels
-else:
-    available_tournaments = all_tournaments
+available_tournaments = [
+    tournament for tournament in all_tournaments
+    if (not levels or tournament in levels)
+    and (not selected_surfaces or surface_map.get(tournament) in selected_surfaces)
+]
 
 with st.sidebar:
     st.caption(f'{len(available_tournaments)} tournaments available')
@@ -89,7 +104,7 @@ with st.sidebar:
 
     # Show checkbox only when either tournaments filter is being used
     drop_null_rows = False
-    if selected_tournaments or tournament_levels:
+    if selected_tournaments or tournament_levels or selected_surfaces:
         drop_null_rows = st.checkbox('Hide players with no results in selected tournaments', key = 'drop_nulls_filter')
        
     st.divider()
@@ -100,8 +115,8 @@ player_name = ['player_name']
 
 if selected_tournaments:
     cols = player_name + selected_tournaments
-elif levels:
-    cols = player_name + levels
+elif levels or selected_surfaces:
+    cols = player_name + available_tournaments
 else:
     cols = df.columns
 
@@ -125,7 +140,7 @@ metric1.metric('Players Shown', df.select(pl.col('player_name').n_unique()))
 
 metric2.metric('Tournaments Displayed', df.width - 1)
 
-if tournament_levels or selected_tournaments or players:
+if tournament_levels or selected_tournaments or selected_surfaces or players:
     max_points_available = 0
 
     tournament_max_points_dict = max_points(tournament_map)
@@ -143,6 +158,9 @@ if players:
 
 if tournament_levels:
     active_filters.append(f'{len(tournament_levels)} levels')
+
+if selected_surfaces:
+    active_filters.append(f'{len(selected_surfaces)} surfaces')
 
 if selected_tournaments:
     active_filters.append(f'{len(selected_tournaments)} tournaments')
