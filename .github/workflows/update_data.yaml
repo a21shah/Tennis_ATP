@@ -6,7 +6,7 @@ on:
   push:
   workflow_dispatch:
   schedule:
-    - cron: "35-40 22 11 11 *"
+    - cron: "40-45 22 11 11 *"
 
 jobs:
   Explore-GitHub-Actions:
@@ -15,7 +15,10 @@ jobs:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      - run: echo "The time is ${{}}"
-      - name: Print current date
-        run: date +'%Y-%m-%d'
+      - name: Print current time (UTC)
+        run: date
+      - name: Print custom formatted time
+        run: date +"%Y-%m-%d %H:%M:%S %Z"
+      - name: Print time in a specific timezone
+        run: TZ="America/Toronto" date +"%Y-%m-%d %H:%M:%S %Z"
       - run: echo "🍏 This job's status is ${{ job.status }}."
