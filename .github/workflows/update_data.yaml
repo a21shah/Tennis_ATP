@@ -15,10 +15,10 @@ permissions:
   contents: write
 
 env:
-  YEAR: ${{ inputs.year || 2026 }}   # inputs is empty on schedule runs, so this falls back to 2026
+  YEAR: ${{ inputs.year || 2026 }}   # Default year for scheduled runs; manual runs can override with any year
 
 jobs:
-  download:
+  Download_File:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repo
