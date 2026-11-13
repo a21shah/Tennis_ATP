@@ -1,24 +1,36 @@
-name: Update ATP Data 
+name: Update ATP Data
 
-run-name: $Testing cron schedule
+run-name: Test Year
 
-on: 
+on:
   push:
   workflow_dispatch:
+    inputs:
+      year:
+        description: 'Which year to extract data for'
+        required: false
+        type: number
+        default: 2026
   schedule:
-    - cron: "40-45 22 11 11 *"
+    - cron: "45-50 21 * * 4"
+      timezone: 'America/Toronto'
+
+permissions:
+  contents: write
+
+env:
+  INPUT_YEAR: ${{ inputs.year || 2026 }}
 
 jobs:
-  Explore-GitHub-Actions:
+  Update-Data:
     runs-on: ubuntu-latest
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      - name: Print current time (UTC)
-        run: date
       - name: Print custom formatted time
         run: date +"%Y-%m-%d %H:%M:%S %Z"
       - name: Print time in a specific timezone
         run: TZ="America/Toronto" date +"%Y-%m-%d %H:%M:%S %Z"
+      - run: echo "The inputted year is $INPUT_YEAR"
       - run: echo "🍏 This job's status is ${{ job.status }}."
