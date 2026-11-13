@@ -1,36 +1,48 @@
-name: Update ATP Data
-
-run-name: Test Year
+name: Download ATP Data
 
 on:
-  push:
   workflow_dispatch:
     inputs:
       year:
-        description: 'Which year to extract data for'
+        description: 'Year to download'
         required: false
         type: number
-        default: 2026
   schedule:
-    - cron: "45-50 21 * * 4"
+    - cron: "0 6 * * 1"   # Mondays 6:00am Toronto time
       timezone: 'America/Toronto'
 
 permissions:
   contents: write
 
 env:
-  INPUT_YEAR: ${{ inputs.year || 2026 }}
+  YEAR: ${{ inputs.year || 2026 }}   # Default year for scheduled runs; manual runs can override with any year
 
 jobs:
-  Update-Data:
+  Download_File:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      - name: Print custom formatted time
-        run: date +"%Y-%m-%d %H:%M:%S %Z"
-      - name: Print time in a specific timezone
-        run: TZ="America/Toronto" date +"%Y-%m-%d %H:%M:%S %Z"
-      - run: echo "The inputted year is $INPUT_YEAR"
-      - run: echo "🍏 This job's status is ${{ job.status }}."
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Download CSV
+        run: |
+          set -euo pipefail
+          mkdir -p matches_data
+          URL=$(curl -fsSL 'https://stats.tennismylife.org/api/data-files' \
+            | jq -r --arg n "${YEAR}.csv" '.files[] | select(.name == $n) | .url')
+          echo "Downloading: $URL"
+          test -n "$URL"
+          curl -fsSL "$URL" -o "matches_data/atp_matches_${YEAR}.csv"
+          test -s "matches_data/atp_matches_${YEAR}.csv"
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "matches_data/atp_matches_${YEAR}.csv"
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: update ATP matches ${YEAR} ($(date -u +%F))"
+            git push
+          fi
