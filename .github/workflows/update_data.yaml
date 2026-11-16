@@ -8,7 +8,7 @@ on:
         required: false
         type: number
   schedule:
-    - cron: "0 6 * * 1"   # Mondays 6:00am Toronto time
+    - cron: "21 6 * * 1,2,3"   # Monday-Wednesday 6:21am Toronto time
       timezone: 'America/Toronto'
 
 permissions:
